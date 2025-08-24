@@ -105,7 +105,6 @@ def word_list_to_counter(WL) :
 
 def unicode_to_str(ucodes) :
     ucode = ord(ucodes)
-    #print('unicode_to_str : {:#x}'.format(ucode))
 
     if ucode == 0xbd :
         return ' onehalf'
@@ -152,8 +151,6 @@ def CheckUnicode (filename) :
         text = f.read()
 
     non_ascii = [ch for ch in text if ord(ch) > 127]
-    #for ch in set(non_ascii):
-    #    print(f"Character: {ch} | Code point: U+{ord(ch):04X} | Name: {unicodedata.name(ch, 'UNKNOWN')}")
     for na in non_ascii :
         print('{:#x}-{}'.format(ord(na),na), end=' ')
 
@@ -177,21 +174,20 @@ def PandasRead(filename) :
         ing = ''.join(map(unicode_to_str,ing))
         df.at[ix,'Instructions'] = ing 
 
-    for ix in range(10) :
-        print(df.at[ix,'Ingredients'])
-        print('')
-    print('\n\n')
-    for ix in range(10) :
-        print(df.at[ix,'Instructions'])
-        print('')
-    
+    return df
 
 
 if __name__ == '__main__' :
     nltk.download('punkt')
     nltk.download('stopwords')
 
-    PandasRead(r'Food/13k-recipes.csv')
+    df = PandasRead(r'Food/13k-recipes.csv')
+    for ig in df['Ingredients'] :
+        print(ig)
+        sents = sent_tokenize(ig)
+        for sent in sents :
+            print('    {}'.format(sent))
+        print('')
     sys.exit(0)
 
     L = read_files_from_folders(['Food'])
