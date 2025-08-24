@@ -1,4 +1,5 @@
 import re
+import read_corpus
 
 def replace_fraction(match) :
     frac = match.group(0)
@@ -70,3 +71,6 @@ pat3 = r'(\[.*?\])'
 S = re.sub(pat3,replace_square_brace,S)
 S = re.sub(pat2,replace_fraction,S)
 print(S)
+print('')
+slist = read_corpus.read_sentences_from_string(S)
+print(slist)

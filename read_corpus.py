@@ -40,6 +40,18 @@ def read_sentences_from_file_content(file_contents) :
     return sentence_list
 
 
+def read_sentences_from_string(S) :
+    sentence_list = []
+    sents = sent_tokenize(f)
+    for s in sents :
+        sentence_list.append(s)
+
+    return sentence_list
+
+
+
+
+
 
 def nltk_tokenize_sentences(sentence_list) :
     stop_words = set(stopwords.words('english'))
