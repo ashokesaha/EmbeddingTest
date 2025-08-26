@@ -37,6 +37,33 @@ def replace_fraction(match) :
 
 
 
+
+def isNumber(W) :
+    pattern = r'(\d+|one|two|three|four|five|six|seven|eight|nine|ten|twelve|twenty|1eight|1four|1six|1two|3two|a|half|twothird|onefourth|threefourth|oneeighth|onefourth|onehalf|onethird|quarter|UNKFRAC)'
+
+    P = re.compile(pattern)
+    if P.match(W):
+        return True
+    else :
+        return False
+
+
+
+
+def replace_volume(match):
+    L = match.group().split()
+
+    if not isNumber(L[-2]) :
+        return ' '.join(L)
+    if not isNumber(L[-3]) :
+        return ' '.join([L[-3],'VVOLUMEE'])
+
+    return 'VVOLUME'
+
+
+
+
+
 def replace_square_brace(match) :
     S = match.group(0)
     match = None
@@ -83,7 +110,7 @@ def replace_linebreak(match) :
 
 def replace_temp(match) :
     S = match.group(0)
-    result = re.match(r'\d+?°[fc]', S)
+    result = re.match(r'\d+?°[fc]*', S)
     if result :
         result = 'TTEMPP' 
     else :
@@ -103,14 +130,15 @@ def replace_time(match) :
 
 PATMATCH = {}
 FUNCMATCH = {}
-KEYS = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp']
+KEYS = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume']
 
 PATMATCH['fraction'] = r'([1-9]+/[1-9]+)'
 PATMATCH['square_brace'] = r'(\[.*?\])'
 PATMATCH['single_quote'] = r'(\'.*?\')' 
 PATMATCH['linebreak'] = r'(\'\s*,\s*\'?)' 
-PATMATCH['temp'] =  r'(\d+?°[fc])' 
-PATMATCH['time'] =  r'(\d+ (\w* )*(minutes|days|hours))|(\w+ (minutes|days|hours))' 
+PATMATCH['temp']  =  '(\d+(-\d+)*)°[fc]'
+PATMATCH['time']  =  r'(\d+(.\d+)* (minutes|days|hours|seconds))' 
+PATMATCH['volume'] = r'(\w+)\s+(\w+) (drops*|pints*|cups*|liters*|glass|glasses)'
 
 
 FUNCMATCH['fraction'] = replace_fraction 
@@ -119,11 +147,12 @@ FUNCMATCH['single_quote'] = replace_single_quote
 FUNCMATCH['linebreak'] = replace_linebreak 
 FUNCMATCH['temp'] = replace_temp 
 FUNCMATCH['time'] = replace_time 
+FUNCMATCH['volume'] = replace_volume 
 
 
 
 def process_Ingredients(S) :
-    IK = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time']
+    IK = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume']
     for K in IK :
         S = re.sub(PATMATCH[K], FUNCMATCH[K], S)
     return S.split('  --  ')
@@ -131,7 +160,7 @@ def process_Ingredients(S) :
 
 
 def process_Instructions(S) :
-    IK = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time']
+    IK = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume']
     for K in IK :
         S = re.sub(PATMATCH[K], FUNCMATCH[K], S)
 

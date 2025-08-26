@@ -236,6 +236,7 @@ def PrintSentences(sent_list) :
 if __name__ == '__main__' :
     nltk.download('punkt')
     nltk.download('stopwords')
+    pd.set_option('display.max_colwidth', None)
 
     df = PandasRead(r'Food/13k-recipes.csv')
     rowcount = df.shape[0]
@@ -273,18 +274,9 @@ if __name__ == '__main__' :
             C.update(wl)
 
         sentence_list = []
-        if ix >= 100 :
-            break
+        #if ix >= 500 :
+        #    break
 
 
     PrintSentences(all_sentences)
-
-    #print('')
-    #print(C)
-    #print('')
-    #print(len(C))
-    #print('')
-    #zeroE = [x for x in C.keys() if C[x] == 1]
-    #print(zeroE)
-    #print('Zero count {}'.format(len(zeroE)))
 
