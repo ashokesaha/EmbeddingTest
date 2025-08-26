@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 import unicodedata
 import pandas as pd
 
@@ -16,6 +17,7 @@ from tokenizers.models import   WordPiece
 from tokenizers.trainers import WordPieceTrainer
 from tokenizers.pre_tokenizers import Whitespace
 import trainfiles
+import ashoke_regex
 
 def read_files_from_folders(folder_list):
     file_contents = []
@@ -42,7 +44,7 @@ def read_sentences_from_file_content(file_contents) :
 
 def read_sentences_from_string(S) :
     sentence_list = []
-    sents = sent_tokenize(f)
+    sents = sent_tokenize(S)
     for s in sents :
         sentence_list.append(s)
 
@@ -63,6 +65,10 @@ def nltk_tokenize_sentences(sentence_list) :
     stop_words.add('!')
     stop_words.add('#')
     stop_words.add('$')
+    stop_words.add('>')
+    stop_words.add(';')
+    stop_words.add(')')
+    stop_words.add('(')
 
     word_list = []
     for s in sentence_list :
@@ -158,6 +164,17 @@ def unicode_to_str(ucodes) :
     return str(ucodes)
 
 
+
+
+
+def check_temp(W) :
+    pat = re.compile(r'\d+?°f')
+    if pat.match(W) :
+        return 'TTEMPP' 
+    return W 
+
+
+
 def CheckUnicode (filename) :
     with open(filename, "r", encoding="utf-8") as f:
         text = f.read()
@@ -168,6 +185,9 @@ def CheckUnicode (filename) :
 
 
 
+
+
+
 def PandasRead(filename) :
     df = pd.read_csv(filename)
     df = df.dropna()
@@ -175,18 +195,42 @@ def PandasRead(filename) :
 
     for ix in range(rowcount) :
         try :
-            ing = df.loc[ix].at['Ingredients']
+            ing = df.loc[ix].at['Title']
+            ing = ing.lower()
+            df.at[ix,'Title'] = ing 
         except KeyError as e :
             continue
  
+        ing = df.loc[ix].at['Ingredients']
         ing = ''.join(map(unicode_to_str,ing))
+        ing = ing.lower()
         df.at[ix,'Ingredients'] = ing 
 
         ing = df.loc[ix].at['Instructions']
         ing = ''.join(map(unicode_to_str,ing))
+        ing = ing.lower()
         df.at[ix,'Instructions'] = ing 
 
     return df
+
+
+
+
+
+def PrintOneSentence(sent) :
+    for W in sent.split() :
+        print(W,end=' ')
+    print('')
+
+
+
+
+def PrintSentences(sent_list) :
+    for sent in sent_list :
+        PrintOneSentence(sent)
+        #print('----------------------')
+
+
 
 
 if __name__ == '__main__' :
@@ -194,33 +238,53 @@ if __name__ == '__main__' :
     nltk.download('stopwords')
 
     df = PandasRead(r'Food/13k-recipes.csv')
-    for ig in df['Ingredients'] :
-        print(ig)
-        sents = sent_tokenize(ig)
-        for sent in sents :
-            print('    {}'.format(sent))
-        print('')
-    sys.exit(0)
+    rowcount = df.shape[0]
 
-    L = read_files_from_folders(['Food'])
-    S = read_sentences_from_file_content(L)
+    all_sentences = []
+    sentence_list = []
 
-    WL = nltk_tokenize_sentences(S)
-    for wl in WL :
-        print(wl)
+    C = Counter()
 
-    print('\n\n')
+    for ix in range(rowcount) :
+        try :
+            Title        = df.loc[ix].at['Title']
+            Ingredients  = df.loc[ix].at['Ingredients']
+            Instructions = df.loc[ix].at['Instructions']
+        except KeyError as e :
+            continue
 
-    #WL = bpe_tokenize_sentences(S)
-    #for wl in WL :
-    #    print(wl)
+        sentence_list.append('Here is the recipe for ' + Title + ' ' + 'EEOSS')
 
-    #print('\n\n')
+        ing = ashoke_regex.process_Ingredients(Ingredients)
+        sentence_list.append('Here are the necessary ingredients')
+        for s in ing :
+            sentence_list.append(s + ' ' + 'EEOSS>')
 
-    #WL = wordpiece_tokenize_sentences(S)
-    #for wl in WL :
-    #    print(wl)
 
-    C = word_list_to_counter(WL)
-    print(C)
+        Instructions = ashoke_regex.process_Instructions(Instructions)
+        sl = read_sentences_from_string(Instructions)
+        for sent in sl :
+            sentence_list.append(sent + ' ' + 'EEOSS')
+            all_sentences.append(sent + ' ' + 'EEOSS')
+
+        word_list = nltk_tokenize_sentences(sentence_list)
+
+        for wl in word_list :
+            C.update(wl)
+
+        sentence_list = []
+        if ix >= 100 :
+            break
+
+
+    PrintSentences(all_sentences)
+
+    #print('')
+    #print(C)
+    #print('')
+    #print(len(C))
+    #print('')
+    #zeroE = [x for x in C.keys() if C[x] == 1]
+    #print(zeroE)
+    #print('Zero count {}'.format(len(zeroE)))
 
