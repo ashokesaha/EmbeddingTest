@@ -124,13 +124,16 @@ def replace_time(match) :
     return 'TTIMEE'
 
 
+def replace_tbsp(match) :
+    return 'TTBSPP'
+
 
 
 
 
 PATMATCH = {}
 FUNCMATCH = {}
-KEYS = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume']
+KEYS = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume', 'tbsp']
 
 PATMATCH['fraction'] = r'([1-9]+/[1-9]+)'
 PATMATCH['square_brace'] = r'(\[.*?\])'
@@ -139,6 +142,7 @@ PATMATCH['linebreak'] = r'(\'\s*,\s*\'?)'
 PATMATCH['temp']  =  '(\d+(-\d+)*)°[fc]'
 PATMATCH['time']  =  r'(\d+(.\d+)* (minutes|days|hours|seconds))' 
 PATMATCH['volume'] = r'(\w+)\s+(\w+) (drops*|pints*|cups*|liters*|glass|glasses)'
+PATMATCH['tbsp']  =  r"(\d+\-\d+)|\w+\s+tbsp\.*"
 
 
 FUNCMATCH['fraction'] = replace_fraction 
@@ -148,11 +152,12 @@ FUNCMATCH['linebreak'] = replace_linebreak
 FUNCMATCH['temp'] = replace_temp 
 FUNCMATCH['time'] = replace_time 
 FUNCMATCH['volume'] = replace_volume 
+FUNCMATCH['tbsp'] = replace_tbsp 
 
 
 
 def process_Ingredients(S) :
-    IK = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume']
+    IK = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume', 'tbsp']
     for K in IK :
         S = re.sub(PATMATCH[K], FUNCMATCH[K], S)
     return S.split('  --  ')
@@ -160,7 +165,7 @@ def process_Ingredients(S) :
 
 
 def process_Instructions(S) :
-    IK = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume']
+    IK = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume', 'tbsp']
     for K in IK :
         S = re.sub(PATMATCH[K], FUNCMATCH[K], S)
 
