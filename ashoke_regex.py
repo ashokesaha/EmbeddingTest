@@ -58,7 +58,7 @@ def replace_volume(match):
     if not isNumber(L[-3]) :
         return ' '.join([L[-3],'VVOLUMEE'])
 
-    return 'VVOLUME'
+    return 'VVOLUMEE'
 
 
 
@@ -106,8 +106,6 @@ def replace_linebreak(match) :
     return '  --  '
 
 
-
-
 def replace_temp(match) :
     S = match.group(0)
     result = re.match(r'\d+?°[fc]*', S)
@@ -119,6 +117,9 @@ def replace_temp(match) :
     return result 
 
 
+def replace_ttempp(match) :
+    return 'TTEMPP'
+
 
 def replace_time(match) :
     return 'TTIMEE'
@@ -128,12 +129,18 @@ def replace_tbsp(match) :
     return 'TTBSPP'
 
 
+def replace_ounce(match) :
+    return 'VVOLUMEE'
+
+def replace_number(match) :
+    return 'NNUMBERR'
+
 
 
 
 PATMATCH = {}
 FUNCMATCH = {}
-KEYS = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume', 'tbsp']
+KEYS = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume', 'tbsp', 'ounce', 'ttempp']
 
 PATMATCH['fraction'] = r'([1-9]+/[1-9]+)'
 PATMATCH['square_brace'] = r'(\[.*?\])'
@@ -143,6 +150,9 @@ PATMATCH['temp']  =  '(\d+(-\d+)*)°[fc]'
 PATMATCH['time']  =  r'(\d+(.\d+)* (minutes|days|hours|seconds))' 
 PATMATCH['volume'] = r'(\w+)\s+(\w+) (drops*|pints*|cups*|liters*|glass|glasses)'
 PATMATCH['tbsp']  =  r"(\d+\-\d+)|\w+\s+tbsp\.*"
+PATMATCH['ttempp']  = r"(TTEMPP[/-])+(TTEMPP)*" 
+PATMATCH['ounce']  = r"(\d+|half|quarters*)(-|\s+)(oz|ounces*|quarts*)"
+PATMATCH['number']  = r"(\d+|one|two|three|four|five|six|seven|eight|nine|ten)"
 
 
 FUNCMATCH['fraction'] = replace_fraction 
@@ -150,22 +160,18 @@ FUNCMATCH['square_brace'] = replace_square_brace
 FUNCMATCH['single_quote'] = replace_single_quote 
 FUNCMATCH['linebreak'] = replace_linebreak 
 FUNCMATCH['temp'] = replace_temp 
+FUNCMATCH['ttempp'] = replace_ttempp 
 FUNCMATCH['time'] = replace_time 
 FUNCMATCH['volume'] = replace_volume 
 FUNCMATCH['tbsp'] = replace_tbsp 
+FUNCMATCH['ounce'] = replace_ounce 
+FUNCMATCH['number'] = replace_number 
 
 
 
 def process_Ingredients(S) :
-    IK = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume', 'tbsp']
-    for K in IK :
-        S = re.sub(PATMATCH[K], FUNCMATCH[K], S)
-    return S.split('  --  ')
-
-
-
-def process_Instructions(S) :
-    IK = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume', 'tbsp']
+    #IK = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume', 'tbsp', 'ounce', 'number']
+    IK = []
     for K in IK :
         S = re.sub(PATMATCH[K], FUNCMATCH[K], S)
 
@@ -174,14 +180,80 @@ def process_Instructions(S) :
 
 
 
+def process_Instructions(S) :
+    #IK = ['linebreak', 'fraction', 'square_brace', 'single_quote', 'temp', 'time', 'volume', 'tbsp', 'ounce', 'number']
+    IK = []
+    for K in IK :
+        S = re.sub(PATMATCH[K], FUNCMATCH[K], S)
+
+    return S
+    #return S.split('  --  ')
+
+
+
+def replace_nmbr(match) :
+    return ' #NUMBER# '
+
+def replace_nmbrr(match) :
+    return '#NUMBER#'
+
+
+def string_to_number(S) :
+    pattern = r"(\d+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen)\s+"
+    S = re.sub(pattern, ' #NUMBER# ', S)
+
+    pattern = r"(#NUMBER#|#FRACTION#)+(-)?(#NUMBER#|#FRACTION#)"
+    S = re.sub(pattern, '#NUMBER#', S)
+
+    pattern = r"#NUMBER#.?#NUMBER#"
+    S = re.sub(pattern, replace_nmbrr, S)
+
+    pattern = r"#NUMBER#°[f|c]?"
+    S = re.sub(pattern, '#TEMP#', S)
+
+    pattern = r"\d+°[f|c]"
+    S = re.sub(pattern, '#TEMP#', S)
+
+    pattern = r"(minutes*|days*|hours*|seconds*|months*)"
+    S = re.sub(pattern, '#TIME#', S)
+
+    pattern = r"#NUMBER#\s+#TIME#"
+    S = re.sub(pattern, '#DURATION#', S)
+
+    pattern = r"(#NUMBER#|#FRACTION#)(\s+|-)(tbsps*|tsps*|cups*|bottles*|jugs*|mugs*|drops*|ounces*|oz|tablespoons*|teaspoons*|lbs*)(\.)*"
+    S = re.sub(pattern, '#VOLUME#', S)
+
+    pattern = r"#NUMBER#.?#NUMBER#"
+    S = re.sub(pattern, '#NUMBER#', S)
+
+    pattern = r"#NUMBER#\s+to\s+#DURATION#"
+    S = re.sub(pattern, '#DURATION#', S)
+
+
+
+    return S
+
+
+
+
+def replace_word(match) :
+    s = match.group(0)
+    if s.startswith('tsp') or s.startswith('tbsp') or s.startswith('teaspoon') :
+        s = 'tsp'
+    return s 
+
+
+
+def match_words(S) :
+    pattern = r"(tsps*|tbsps*|teaspoons*)\.?"
+    S = re.sub(pattern,replace_word,S)
+    return S
+
+
+
 
 if __name__ == '__main__' :
     import read_corpus
-
-    S = "['two pounds 1-inch pieces trimmed boneless veal stew meat', '1/4 cup all purpose flour', 'three tablespoons butter', 'one tablespoon olive oil', 'two medium onions, finely chopped', 'two celery stalks, finely chopped', 'one 1/four cups dry white wine', 'two cups tomato sauce', 'one cup (or more) water', 'three tablespoons chopped fresh parsley', 'two cinnamon sticks', 'one 1/4 pounds white-skinned potatoes, peeled, cut into 1/2-inch pieces', '1/2 cup whipping cream']"
-
-    S = r"['one (3 onehalf–4-lb.) whole chicken', '2 threefourth tsp. kosher salt, divided, plus more', 'two small acorn squash (about three lb. total)', 'two Tbsp. finely chopped sage', 'one Tbsp. finely chopped rosemary', 'six Tbsp. unsalted butter, melted, plus three Tbsp. room temperature', ' onefourth tsp. ground allspice', 'Pinch of crushed red pepper flakes', 'Freshly ground black pepper', ' onethird loaf good-quality sturdy white bread, torn into 1 pieces (about 2 onehalf cups)', 'two medium apples (such as Gala or Pink Lady; about 14 oz. total), cored, cut into 1 pieces', 'two Tbsp. extra-virgin olive oil', ' onehalf small red onion, thinly sliced', 'three Tbsp. apple cider vinegar', 'one Tbsp. white miso', ' onefourth cup all-purpose flour', 'two Tbsp. unsalted butter, room temperature', ' onefourth cup dry white wine', 'two cups unsalted chicken broth', 'two tsp. white miso', 'Kosher salt, freshly ground pepper']"
-
 
     S = 'place a rack in middle and lower third of oven; preheat to 425°f. Also heat milk to 75°f.'
     S = re.sub(PATMATCH['temp'], FUNCMATCH['temp'], S)

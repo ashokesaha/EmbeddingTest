@@ -10,12 +10,12 @@ import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize, word_tokenize
 
-from tokenizers import          Tokenizer
-from tokenizers.models import   BPE
-from tokenizers.trainers import BpeTrainer
-from tokenizers.models import   WordPiece
-from tokenizers.trainers import WordPieceTrainer
-from tokenizers.pre_tokenizers import Whitespace
+#from tokenizers import          Tokenizer
+#from tokenizers.models import   BPE
+#from tokenizers.trainers import BpeTrainer
+#from tokenizers.models import   WordPiece
+#from tokenizers.trainers import WordPieceTrainer
+#from tokenizers.pre_tokenizers import Whitespace
 import trainfiles
 import ashoke_regex
 
@@ -69,6 +69,7 @@ def nltk_tokenize_sentences(sentence_list) :
     stop_words.add(';')
     stop_words.add(')')
     stop_words.add('(')
+    stop_words.add('\'\'')
 
     word_list = []
     for s in sentence_list :
@@ -124,42 +125,63 @@ def word_list_to_counter(WL) :
 def unicode_to_str(ucodes) :
     ucode = ord(ucodes)
 
+    if ucode >= ord('0') and ucode <= ord('9') :
+        return '#NUMBER#'
+
     if ucode == 0xbd :
-        return ' onehalf'
+        #return ' onehalf'
+        return '#FRACTION#'
     elif ucode == 0xbc :
-        return ' onefourth'
+        #return ' onefourth'
+        return '#FRACTION#'
     elif ucode == 0xbe :
-        return ' threefourth'
+        #return ' threefourth'
+        return '#FRACTION#'
     elif ucode == 0x2150 :
-        return ' oneseventh'
+        #return ' oneseventh'
+        return '#FRACTION#'
     elif ucode == 0x2151 :
-        return ' onenineth'
+        #return ' onenineth'
+        return '#FRACTION#'
     elif ucode == 0x2152 :
-        return ' onetenth'
+        #return ' onetenth'
+        return '#FRACTION#'
     elif ucode == 0x2153 :
-        return ' onethird'
+        #return ' onethird'
+        return '#FRACTION#'
     elif ucode == 0x2154 :
-        return ' twothird'
+        #return ' twothird'
+        return '#FRACTION#'
     elif ucode == 0x2155 :
-        return ' onefifth'
+        #return ' onefifth'
+        return '#FRACTION#'
     elif ucode == 0x2156 :
-        return ' twofifth'
+        #return ' twofifth'
+        return '#FRACTION#'
     elif ucode == 0x2157 :
-        return ' threefifth'
+        #return ' threefifth'
+        return '#FRACTION#'
     elif ucode == 0x2158 :
-        return ' fourfifth'
+        #return ' fourfifth'
+        return '#FRACTION#'
     elif ucode == 0x2159 :
-        return ' onesixth'
+        #return ' onesixth'
+        return '#FRACTION#'
     elif ucode == 0x215a :
-        return ' fivesixth'
+        #return ' fivesixth'
+        return '#FRACTION#'
     elif ucode == 0x215b :
-        return ' oneeigth'
+        #return ' oneeigth'
+        return '#FRACTION#'
     elif ucode == 0x215c :
-        return ' threeeighth'
+        #return ' threeeighth'
+        return '#FRACTION#'
     elif ucode == 0x215d :
-        return ' fiveeighth'
+        #return ' fiveeighth'
+        return '#FRACTION#'
     elif ucode == 0x215e :
-        return ' seveneighth'
+        #return ' seveneighth'
+        return '#FRACTION#'
 
     return str(ucodes)
 
@@ -202,13 +224,15 @@ def PandasRead(filename) :
             continue
  
         ing = df.loc[ix].at['Ingredients']
-        ing = ''.join(map(unicode_to_str,ing))
         ing = ing.lower()
+        ing = ''.join(map(unicode_to_str,ing))
+        ing = ashoke_regex.string_to_number(ing)
         df.at[ix,'Ingredients'] = ing 
 
         ing = df.loc[ix].at['Instructions']
-        ing = ''.join(map(unicode_to_str,ing))
         ing = ing.lower()
+        ing = ''.join(map(unicode_to_str,ing))
+        ing = ashoke_regex.string_to_number(ing)
         df.at[ix,'Instructions'] = ing 
 
     return df
@@ -228,17 +252,17 @@ def PrintOneSentence(sent) :
 def PrintSentences(sent_list) :
     for sent in sent_list :
         PrintOneSentence(sent)
-        #print('----------------------')
 
 
 
 
 if __name__ == '__main__' :
-    nltk.download('punkt')
-    nltk.download('stopwords')
+    #nltk.download('punkt')
+    #nltk.download('stopwords')
     pd.set_option('display.max_colwidth', None)
 
     df = PandasRead(r'Food/13k-recipes.csv')
+    #df = PandasRead(r'Food/small.csv')
     rowcount = df.shape[0]
 
     all_sentences = []
@@ -255,11 +279,15 @@ if __name__ == '__main__' :
             continue
 
         sentence_list.append('Here is the recipe for ' + Title + ' ' + 'EEOSS')
+        all_sentences.append('Here is the recipe for ' + Title + ' ' + 'EEOSS')
 
         ing = ashoke_regex.process_Ingredients(Ingredients)
-        sentence_list.append('Here are the necessary ingredients')
+        ing = read_sentences_from_string(ing)
+        sentence_list.append('Here are the necessary ingredients' + ' ' + 'EEOSS')
+        all_sentences.append('Here are the necessary ingredients' + ' ' + 'EEOSS')
         for s in ing :
             sentence_list.append(s + ' ' + 'EEOSS>')
+            all_sentences.append(s + ' ' + 'EEOSS>')
 
 
         Instructions = ashoke_regex.process_Instructions(Instructions)
@@ -269,14 +297,12 @@ if __name__ == '__main__' :
             all_sentences.append(sent + ' ' + 'EEOSS')
 
         word_list = nltk_tokenize_sentences(sentence_list)
-
         for wl in word_list :
             C.update(wl)
 
         sentence_list = []
-        #if ix >= 500 :
-        #    break
-
 
     PrintSentences(all_sentences)
+    print('\n\n')
+    print(C)
 
