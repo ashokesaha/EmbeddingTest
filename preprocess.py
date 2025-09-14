@@ -7,6 +7,8 @@ from io import StringIO
 from collections import Counter
 
 
+STOPWORDS = ['a', 'an', 'the', 'to', 'on', 'of', 'at', 'is', 'was', 'or', 'but', 'if', 'in', 'and', 'are', 'be', 'let', 'as']
+
 def ReplaceUnicode(SB, line) :
     mystr = None
     for C in line :
@@ -84,6 +86,21 @@ def TemparatureHandler(line) :
     line = re.sub(pattern, 'TMP', line)
     return line
 
+
+
+def NUMPattern(W) :
+    pat = re.compile('\d+$')
+    if pat.match(W) :
+        return 'NUM'
+    return W
+
+ 
+
+def TEMPPattern(W) :
+    pat = re.compile('\d+°[c|f]$')
+    if pat.match(W) :
+        return 'TEMP'
+    return W
 
 
 

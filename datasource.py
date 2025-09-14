@@ -11,9 +11,11 @@ from collections import Counter
 
 class FileSource :
     def __init__(self,filename) :
+        self.filename = filename
         self.fp = open(filename,'r')
 
     def __iter__(self) :
+        Lines = []
         for line in self.fp :
             line = preprocess.SeparateFullStop(line)
             SB = StringIO() 
@@ -21,7 +23,44 @@ class FileSource :
             line = SB.getvalue()
             line = line.lower()
             line = preprocess.DropChars(line, [ '^', '[', ']', '(', ')', '\'', '"', '-', ',', ';'] )
-            yield line.split()
+            #yield line.split()
+
+            line = line.split()
+            line = [l for l in line if l not in preprocess.STOPWORDS]
+            line = [preprocess.NUMPattern(w) for w in line]
+            line = [preprocess.TEMPPattern(w) for w in line]
+
+            for W in line :
+                Lines.append(W)
+        yield Lines
+
+
+    def rewind(self) :
+        self.fp = open(self.filename,'r')
+
+
+
+
+
+
+class MahaFileSource :
+    def __init__(self,filenames) :
+        self.fss = []
+        for filename in filenames :
+            self.fss.append(FileSource(filename))
+
+
+    def rewind(self) :
+        for fs in self.fss :
+            fs.rewind()
+
+
+    def __iter__(self) :
+        for fs in self.fss :
+            for line in fs :
+                yield line
+
+
 
 
 
@@ -43,7 +82,35 @@ class MyCorpus :
 
     def DICTIONARY(self) :
         return self.dictionary
+
+
+
+
+
+class MahaCorpus :
+    def __init__(self, trainfiles) :
+        self.trainfiles = trainfiles
+        self.mfs = MahaFileSource(trainfiles)
+        self.dictionary = gensim.corpora.Dictionary(self.mfs)
+        self.corpus = None
+
+    def BuildCorpus(self) :
+        self.mfs.rewind()
+        lines = [line for line in self.mfs]
+        self.corpus = [self.dictionary.doc2bow(line) for line in lines]
+
+
+    def TOKEN(self,id) :
+        return self.dictionary[id]
+
+    def DICTIONARY(self) :
+        return self.dictionary
     
+    def CORPUS(self) :
+        return self.corpus
+
+    def FILES(self) :
+        return self.trainfiles
 
 
 
@@ -101,3 +168,15 @@ if __name__ == '__main__' :
     #    print('')
 
 
+
+'''
+import datasource as ds
+MC = ds.MahaCorpus(['Food/cake.txt', 'Food/dosa.txt', 'Food/pizza.txt'])
+MC.BuildCorpus()
+D = MC.DICTIONARY()
+D.token2id
+D.cfs
+D.dfs
+C = MC.CORPUS()
+model = TfidfModel(C)
+'''

@@ -3,8 +3,8 @@ from gensim import corpora
 from gensim import models
 from gensim import similarities
 
-
 import sys
+import os 
 
 
 
@@ -26,12 +26,29 @@ doc = "Human computer interaction"
 
 
 
+documents = []
 FileSources = ['Food/biriyani.txt', 'Food/burrito.txt', 'Food/butter_chicken.txt',
                'Food/cake.txt', 'Food/chowmein.txt', 'Food/dosa.txt', 'Food/lasagne.txt' ]
-documents = []
-for ix, filename in enumerate(FileSources) :
-    with open(filename,'r') as fp :
-        documents.append(fp.read()) 
+Folders = ['Food','Biology','Festivals']
+
+FileSAOURCES = []
+for F in Folders :
+    dirlist = os.listdir(F)
+    filelist = [F+'/'+f for f in dirlist if os.path.isfile(F+'/'+f) if f.endswith('.txt')]  
+
+    for filename in filelist :
+        with open(filename,'r') as fp :
+            FileSources.append(filename)
+            documents.append(fp.read()) 
+
+ 
+print('FileSources ::')
+print(FileSources)
+print()
+
+#for ix, filename in enumerate(FileSources) :
+#    with open(filename,'r') as fp :
+#        documents.append(fp.read()) 
 
 
 doc = 'spicy india chicken dish'
@@ -63,17 +80,20 @@ tfidf = models.TfidfModel(corpus)
 corpus = tfidf[corpus]
 
 lsi = models.LsiModel(corpus, id2word=dictionary, num_topics=4)
-
-vec_bow = dictionary.doc2bow(doc.lower().split())
-vec_lsi = lsi[vec_bow]  # convert the query to LSI space
-
 index = similarities.MatrixSimilarity(lsi[corpus])  # transform corpus to LSI space and index it
 
-sims = index[vec_lsi]  # perform a similarity query against the corpus
-sims = sorted(enumerate(sims), key=lambda item: -item[1])
+print('Ready ::')
+for doc in sys.stdin :
+    vec_bow = dictionary.doc2bow(doc.lower().split())
+    vec_lsi = lsi[vec_bow]  # convert the query to LSI space
 
-print('Query: {}'.format(doc))
-for doc_position, doc_score in sims:
-    print('{0:<32}    {1}'.format(FileSources[doc_position], doc_score))
-    #print(doc_position, doc_score, documents[doc_position])
+    sims = index[vec_lsi]  # perform a similarity query against the corpus
+    sims = sorted(enumerate(sims), key=lambda item: -item[1])
+
+    print('Query: {}'.format(doc))
+    for doc_position, doc_score in sims:
+        print('{0:<32}    {1}'.format(FileSources[doc_position], doc_score))
+        #print(doc_position, doc_score, documents[doc_position])
+
+    print('\n')
 
