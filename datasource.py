@@ -9,6 +9,9 @@ from gensim.models import LsiModel
 from io import StringIO
 from collections import Counter
 
+from verbs import rootVerb
+
+
 class FileSource :
     def __init__(self,filename) :
         self.filename = filename
@@ -16,6 +19,7 @@ class FileSource :
 
     def __iter__(self) :
         Lines = []
+
         for line in self.fp :
             line = preprocess.SeparateFullStop(line)
             SB = StringIO() 
@@ -23,12 +27,12 @@ class FileSource :
             line = SB.getvalue()
             line = line.lower()
             line = preprocess.DropChars(line, [ '^', '[', ']', '(', ')', '\'', '"', '-', ',', ';'] )
-            #yield line.split()
 
             line = line.split()
             line = [l for l in line if l not in preprocess.STOPWORDS]
             line = [preprocess.NUMPattern(w) for w in line]
             line = [preprocess.TEMPPattern(w) for w in line]
+            line = [rootVerb(w) for w in line]
 
             for W in line :
                 Lines.append(W)
