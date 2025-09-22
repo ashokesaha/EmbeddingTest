@@ -7,7 +7,7 @@ from io import StringIO
 from collections import Counter
 
 
-STOPWORDS = ['a', 'an', 'the', 'to', 'on', 'of', 'at', 'is', 'was', 'or', 'but', 'if', 'in', 'and', 'are', 'be', 'let', 'as']
+STOPWORDS = ['a', 'an', 'the', 'to', 'on', 'of', 'at', 'is', 'was', 'or', 'but', 'if', 'in', 'and', 'are', 'be', 'let', 'as', 'them', 'he', 'then', 'will', 'so', 'they', 'had', 'were', 'have']
 
 def ReplaceUnicode(SB, line) :
     mystr = None

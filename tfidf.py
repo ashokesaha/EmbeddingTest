@@ -24,5 +24,11 @@ for ix, _ in enumerate(C) :
     print(F[ix])
     print('------------------------------------------')
     for v in V :
-        print('{:16} {}'.format(D[v[0]], v[1]))
+        tokfreq = 0
+        for tok in C[ix] :
+            if tok[0] == v[0] :
+                tokfreq = tok[1]
+                break
+
+        print('{:16} ({:02d}/{:02d}/{})  {}'.format(D[v[0]], tokfreq, D.dfs[v[0]], D.num_docs, v[1]))
 
